@@ -1,5 +1,8 @@
 import { ConfigType, RSQuery } from "../types/types";
 
+import Schema from '../validate/schema.js';
+import { RSQuerySchema } from "./schema";
+
 
 const getSQLForQuery = (query: RSQuery<any>): string => {
 	/**
@@ -29,7 +32,7 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 
 	sqlQuery.push("from", tableToUse.join(","))
 
-	return sqlQuery.join(" ")
+	return sqlQuery.join(" ") + ";"
 }
 
 export class ReactiveSearch {
@@ -82,7 +85,7 @@ export class ReactiveSearch {
 			};
 		}
 
-		const idToQueryMap: Object = {}
+		const idToQueryMap: {[key: string]: string} = {}
 		data.forEach(rsQuery => {
 			const queryForId = getSQLForQuery(rsQuery)
 			idToQueryMap[rsQuery.id!] = queryForId
