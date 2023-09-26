@@ -1,4 +1,4 @@
-import { RSQuery } from "src/types/types";
+import { QueryType, RSQuery } from "src/types/types";
 
 export const parseValue = (query: RSQuery<any>): string[] => {
     /**
@@ -22,8 +22,9 @@ export const parseValue = (query: RSQuery<any>): string[] => {
 
     const whereClauseBuilt: string[] = [];
 
-    // TODO: Make sure that value is proper type based on the search
+    // Make sure that value is proper type based on the search
     // type
+    verifyValueByType(query.value, query.type!)
 
     // TODO: Support range type
     switch (query.type) {
@@ -44,4 +45,20 @@ export const parseValue = (query: RSQuery<any>): string[] => {
 
 
     return whereClauseBuilt
+}
+
+
+const verifyValueByType = (value: any, queryType: QueryType) => {
+    /**
+     * Verify the passed value by type and return an error
+     * if there is any
+     */
+    if (queryType == 'range') {
+        // We only support object here
+        if (typeof value != 'object') throw new Error('value should be an object when type is `range`');
+    }
+
+    if (typeof value == 'object') {
+        throw new Error('value should be one of array or string when type is one of `search, suggestion, term`');
+    }
 }
