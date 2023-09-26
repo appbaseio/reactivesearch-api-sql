@@ -26,18 +26,32 @@ export const parseValue = (query: RSQuery<any>): string[] => {
     // type
     verifyValueByType(query.value, query.type!)
 
+    // If dataField is a string, make it a single entry array
+    let dfAsArr: string[] = []
+    if (typeof query.dataField == 'string') {
+        dfAsArr = [query.dataField]
+    } else {
+        dfAsArr = query.dataField
+    }
+
     // TODO: Support range type
     switch (query.type) {
         case 'search':
-        // @ts-ignore
         case 'suggestion':
-            if (typeof query.dataField == "string") {
-                whereClauseBuilt.push(...[query.dataField, "like", `%${query.value}%`])
-            } else {
-                query.dataField.forEach(df => {
-                    whereClauseBuilt.push(...[df, "like", `%${query.value}%`, query.queryFormat!])
-                })
-            }
+            dfAsArr.forEach((df, index) => {
+                whereClauseBuilt.push(...[df, "like", `%${query.value}%`])
+                if (index != 0) {
+                    whereClauseBuilt.push(query.queryFormat!)
+                }
+            })
+            break
+        case 'term':
+            dfAsArr.forEach((df, index) => {
+                whereClauseBuilt.push(...[df, "=", `%${query.value}%`])
+                if (index != 0) {
+                    whereClauseBuilt.push(query.queryFormat!)
+                }
+            })
             break
         default:
             throw new Error('invalid type passed: ' + query.type)
