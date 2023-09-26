@@ -43,4 +43,6 @@ export type RSQuery<T> = {
 	includeFields?: string[];
 
 	table?: string | Array<string>;
+
+	size?: number;
 };

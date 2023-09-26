@@ -32,6 +32,13 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 
 	sqlQuery.push("from", tableToUse.join(","))
 
+	// Include the size
+	if (!query.size) {
+		query.size = 10;
+	}
+
+	sqlQuery.push("limit", String(query.size));
+
 	return sqlQuery.join(" ") + ";"
 }
 
