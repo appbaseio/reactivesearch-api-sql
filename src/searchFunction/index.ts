@@ -2,6 +2,7 @@ import { ConfigType, RSQuery } from "../types/types";
 
 import Schema from '../validate/schema.js';
 import { RSQuerySchema } from "./schema";
+import { parseValue } from "./value";
 
 
 const getSQLForQuery = (query: RSQuery<any>): string => {
@@ -39,6 +40,12 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 	}
 
 	sqlQuery.push("from", tableToUse.join(","))
+
+	// Parse the value
+	const whereClause = parseValue(query)
+	if (whereClause.length > 0) {
+		sqlQuery.push("where", ...whereClause)
+	}
 
 	// Include the size
 	if (!query.size) {

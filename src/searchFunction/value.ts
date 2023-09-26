@@ -39,7 +39,7 @@ export const parseValue = (query: RSQuery<any>): string[] => {
         case 'search':
         case 'suggestion':
             dfAsArr.forEach((df, index) => {
-                whereClauseBuilt.push(...[df, "like", `%${query.value}%`])
+                whereClauseBuilt.push(...[df, "like", `'%${query.value}%'`])
                 if (index != 0) {
                     whereClauseBuilt.push(query.queryFormat!)
                 }
@@ -47,7 +47,7 @@ export const parseValue = (query: RSQuery<any>): string[] => {
             break
         case 'term':
             dfAsArr.forEach((df, index) => {
-                whereClauseBuilt.push(...[df, "=", `%${query.value}%`])
+                whereClauseBuilt.push(...[df, "=", `'${query.value}'`])
                 if (index != 0) {
                     whereClauseBuilt.push(query.queryFormat!)
                 }
