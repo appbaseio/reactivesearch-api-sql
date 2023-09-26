@@ -20,6 +20,14 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 		query.includeFields = ["*"]
 	}
 
+	// Set the default type if it was not specified
+	if (!query.type) {
+		query.type = 'search'
+	}
+
+	// If `value` is specified then make sure dataField is
+	// also passed.
+
 	// Build the select * part of the sql string
 	sqlQuery.push("select", query.includeFields.join(","))
 

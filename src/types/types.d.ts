@@ -4,6 +4,11 @@ export type ConfigType = {
 }
 
 
+export type QueryType = `search` | `term` | `range` | `suggestion`;
+
+export type QueryFormat = `or` | `and`;
+
+
 export type RSQuery<T> = {
 	index?: string;
 
@@ -45,4 +50,12 @@ export type RSQuery<T> = {
 	table?: string | Array<string>;
 
 	size?: number;
+
+	type?: QueryType;
+
+	value?: T;
+
+	dataField?: string | Array<string>;
+
+	queryFormat?: QueryFormat;
 };
