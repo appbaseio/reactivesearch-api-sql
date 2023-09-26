@@ -1,5 +1,37 @@
 import { ConfigType, RSQuery } from "../types/types";
 
+
+const getSQLForQuery = (query: RSQuery<any>): string => {
+	/**
+	 * Get the SQL equivalent of the query and accordingly return the
+	 * SQL string.
+	 */
+	let sqlQuery: string[] = []
+
+	// Make sure that table is always passed
+	if (!query.table) {
+		throw Error("`table` is a required property!");
+	}
+
+	if (!query.includeFields) {
+		query.includeFields = ["*"]
+	}
+
+	// Build the select * part of the sql string
+	sqlQuery.push("select", query.includeFields.join(","))
+
+	let tableToUse: string[] = []
+	if (typeof query.table == "string") {
+		tableToUse.push(query.table)
+	} else {
+		tableToUse = query.table
+	}
+
+	sqlQuery.push("from", tableToUse.join(","))
+
+	return sqlQuery.join(" ")
+}
+
 export class ReactiveSearch {
     config: ConfigType;
     // @ts-ignore
@@ -7,6 +39,7 @@ export class ReactiveSearch {
     
     constructor(config: ConfigType) {
         this.config = {
+			client: config.client,
             databaseName: config.databaseName,
         }
 
@@ -35,5 +68,26 @@ export class ReactiveSearch {
 		} else {
 			return errors;
 		}
+	};
+
+	translate = (data: RSQuery<any>[]): Record<string, any> => {
+		const error = this.verify(data);
+		if (error) {
+			return {
+				error: {
+					error,
+					code: 400,
+					status: `Bad Request`,
+				},
+			};
+		}
+
+		const idToQueryMap: Object = {}
+		data.forEach(rsQuery => {
+			const queryForId = getSQLForQuery(rsQuery)
+			idToQueryMap[rsQuery.id!] = queryForId
+		})
+
+		return idToQueryMap
 	};
 }

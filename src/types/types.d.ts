@@ -1,5 +1,5 @@
 export type ConfigType = {
-    databaseURL: string;
+    client?: any;
     databaseName: string;
 }
 
@@ -39,4 +39,8 @@ export type RSQuery<T> = {
 	onMicStatusChange?: (next: string, prev: string) => void;
 
 	id?: string;
+
+	includeFields?: string[];
+
+	table?: string | Array<string>;
 };

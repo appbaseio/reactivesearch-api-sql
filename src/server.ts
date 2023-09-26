@@ -33,43 +33,43 @@ async function main() {
 		}
 	};
 
-	app.post(`/_reactivesearch`, async (req, res) => {
-		try {
-			const { query } = validateRequest(req);
-			const ref = new ReactiveSearch({
-				databaseName: "",
-                databaseURL: ""
-			});
+	// app.post(`/_reactivesearch`, async (req, res) => {
+	// 	try {
+	// 		const { query } = validateRequest(req);
+	// 		const ref = new ReactiveSearch({
+	// 			databaseName: "",
+	// 			client: client,
+	// 		});
 
-			try {
-				const data = await ref.query(query);
-				res.status(200).send(data);
-			} catch (err) {
-				res.status(500).send({
-					error: {
-						status: `Internal server error`,
-						code: 500,
-						message: err.message,
-					},
-				});
-			}
-		} catch (error) {
-			res.status(400).send({
-				error: {
-					message: error.message,
-					code: 400,
-					status: `Bad Request`,
-				},
-			});
-		}
-	});
+	// 		try {
+	// 			const data = await ref.query(query);
+	// 			res.status(200).send(data);
+	// 		} catch (err) {
+	// 			res.status(500).send({
+	// 				error: {
+	// 					status: `Internal server error`,
+	// 					code: 500,
+	// 					message: err.message,
+	// 				},
+	// 			});
+	// 		}
+	// 	} catch (error) {
+	// 		res.status(400).send({
+	// 			error: {
+	// 				message: error.message,
+	// 				code: 400,
+	// 				status: `Bad Request`,
+	// 			},
+	// 		});
+	// 	}
+	// });
 
 	app.post(`/_reactivesearch/validate`, (req, res) => {
 		try {
 			const { query } = validateRequest(req);
 			const ref = new ReactiveSearch({
 				databaseName: "",
-                databaseURL: ""
+				client: client,
 			});
 
             const data = ref.translate(query);
