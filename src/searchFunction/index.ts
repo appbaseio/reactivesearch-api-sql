@@ -50,6 +50,9 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 	const whereClause = parseValue(query)
 	if (whereClause.length > 0) {
 		sqlQuery.push("where", ...whereClause)
+	} else if (query.where && query.where != "") {
+		// Check if the where field was passed
+		sqlQuery.push("where", query.where)
 	}
 
 	// Parse the `sortField` and `sortBy` fields.

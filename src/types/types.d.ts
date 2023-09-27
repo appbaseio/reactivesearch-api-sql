@@ -75,6 +75,8 @@ export type RSQuery<T> = {
 	sortBy?: string;
 
 	defaultQuery?: DefaultQuery;
+
+	where?: string;
 };
 
 
