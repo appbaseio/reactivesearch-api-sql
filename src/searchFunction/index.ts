@@ -73,6 +73,15 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 	return sqlQuery.join(" ") + ";"
 }
 
+const executeQuery = async (client: any, sqlQuery: string) => {
+	/**
+	 * Execute the passed query and accordingly parse
+	 * the response into RS equivalent.
+	 */
+	const results = await client.unsafe(sqlQuery);
+	return results
+}
+
 export class ReactiveSearch {
     config: ConfigType;
     // @ts-ignore
@@ -133,4 +142,73 @@ export class ReactiveSearch {
 
 		return idToQueryMap
 	};
+
+	query = (data: RSQuery<any>[]): any => {
+		const error = this.verify(data);
+		if (error) {
+			return {
+				error: {
+					error,
+					code: 400,
+					status: `Bad Request`,
+				},
+			};
+		}
+
+		const idToQueryMap: {[key: string]: string} = {}
+		data.forEach(rsQuery => {
+			if (rsQuery.execute !== undefined && !rsQuery.execute) return
+
+			const queryForId = getSQLForQuery(rsQuery)
+			idToQueryMap[rsQuery.id!] = queryForId
+		})
+
+		// Run each SQL query simultaneously and capture the results together
+		try {
+			const totalStart = performance.now();
+			return Promise.all(
+				Object.keys(idToQueryMap).map(async (item: any) => {
+					const start = performance.now();
+					const query = idToQueryMap[item];
+
+					try {
+						const response = await executeQuery(this.config.client, query);
+						console.log(response);
+						const end = performance.now();
+						const took = Math.abs(end - start) || 1;
+
+						return {
+							response, took
+						}
+					} catch (err) {
+						const end = performance.now();
+						const took = Math.abs(end - start) || 1;
+						console.log(err.stack);
+						return {
+							error: {
+								id: item,
+								hits: null,
+								error: err.toString(),
+								status: 500,
+							},
+							took,
+						};
+					}
+				})
+			).then((res) => {
+				const totalEnd = performance.now();
+				const totalTimeTaken = Math.abs(totalEnd - totalStart) || 1;
+				console.log(totalTimeTaken)
+				// TODO: Return the response
+				// const transformedRes = this.transformResponse(
+				// 	totalTimeTaken,
+				// 	<ResponseObject[]>res,
+				// );
+
+				return res;
+			});
+		} catch(err) {
+			throw err
+		}
+	}
 }
