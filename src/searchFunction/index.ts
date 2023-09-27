@@ -1,4 +1,4 @@
-import { ConfigType, RSQuery } from "../types/types";
+import { ConfigType, RSQuery, ResponseObject } from "../types/types";
 
 import Schema from '../validate/schema.js';
 import { RSQuerySchema } from "./schema";
@@ -178,6 +178,7 @@ export class ReactiveSearch {
 						const took = Math.abs(end - start) || 1;
 
 						return {
+							id: item,
 							response, took
 						}
 					} catch (err) {
@@ -185,6 +186,7 @@ export class ReactiveSearch {
 						const took = Math.abs(end - start) || 1;
 						console.log(err.stack);
 						return {
+							id: item,
 							error: {
 								id: item,
 								hits: null,
@@ -198,17 +200,49 @@ export class ReactiveSearch {
 			).then((res) => {
 				const totalEnd = performance.now();
 				const totalTimeTaken = Math.abs(totalEnd - totalStart) || 1;
-				console.log(totalTimeTaken)
-				// TODO: Return the response
-				// const transformedRes = this.transformResponse(
-				// 	totalTimeTaken,
-				// 	<ResponseObject[]>res,
-				// );
 
-				return res;
+				const transformedRes = this.transformResponse(
+					totalTimeTaken,
+					<ResponseObject[]>res,
+				);
+
+				return transformedRes;
 			});
 		} catch(err) {
 			throw err
 		}
 	}
+
+	transformResponse = (totalTimeTaken: number, data: ResponseObject[]): any => {
+		const transformedRes: any = {};
+		data.forEach((item: any) => {
+			const { id, response, error, took } = item;
+			if (error) {
+				return transformedRes[id] = error;
+			}
+
+			const responseBody = {
+				took: Math.round(took * 100) / 100,
+				hits: {
+					total: {
+						value: response.length
+					},
+					hits: response.map((r: Object) => {
+						return {
+							_score: 1,
+							_source: r
+						}
+					})
+				}
+			}
+
+			return transformedRes[id] = responseBody
+		});
+
+		transformedRes["settings"] = {
+			took: Math.round(totalTimeTaken * 100) / 100,
+		}
+
+		return transformedRes;
+	};
 }

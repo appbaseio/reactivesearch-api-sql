@@ -76,3 +76,15 @@ export type RSQuery<T> = {
 
 	defaultQuery?: DefaultQuery;
 };
+
+
+export type ResponseObject = {
+	response?: any;
+	error?: {
+		status: string;
+		code: number;
+		message: string;
+	};
+	id: string;
+	took: number;
+};
