@@ -173,7 +173,6 @@ export class ReactiveSearch {
 
 					try {
 						const response = await executeQuery(this.config.client, query);
-						console.log(response);
 						const end = performance.now();
 						const took = Math.abs(end - start) || 1;
 
