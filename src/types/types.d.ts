@@ -58,4 +58,6 @@ export type RSQuery<T> = {
 	dataField?: string | Array<string>;
 
 	queryFormat?: QueryFormat;
+
+	from?: number;
 };

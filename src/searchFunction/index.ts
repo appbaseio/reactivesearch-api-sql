@@ -54,6 +54,11 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 
 	sqlQuery.push("limit", String(query.size));
 
+	// Add support for offset if it is present
+	if (query.from) {
+		sqlQuery.push("offset", String(query.from))
+	}
+
 	return sqlQuery.join(" ") + ";"
 }
 
