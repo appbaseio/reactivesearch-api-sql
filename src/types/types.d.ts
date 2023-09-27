@@ -77,6 +77,8 @@ export type RSQuery<T> = {
 	defaultQuery?: DefaultQuery;
 
 	where?: string;
+
+	vectorDataField?: string
 };
 
 
