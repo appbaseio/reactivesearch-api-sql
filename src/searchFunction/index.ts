@@ -12,6 +12,11 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 	 */
 	let sqlQuery: string[] = []
 
+	// If `defaultQuery` is present, we don't need to build a query
+	if (query.defaultQuery && query.defaultQuery.query) {
+		return query.defaultQuery.query
+	}
+
 	// Make sure that table is always passed
 	if (!query.table) {
 		throw Error("`table` is a required property!");

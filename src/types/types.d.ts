@@ -9,6 +9,11 @@ export type QueryType = `search` | `term` | `range` | `suggestion`;
 export type QueryFormat = `or` | `and`;
 
 
+export type DefaultQuery = {
+	query?: string;
+}
+
+
 export type RSQuery<T> = {
 	index?: string;
 
@@ -68,4 +73,6 @@ export type RSQuery<T> = {
 	sortField?: string;
 
 	sortBy?: string;
+
+	defaultQuery?: DefaultQuery;
 };
