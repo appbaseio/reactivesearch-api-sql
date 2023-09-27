@@ -64,4 +64,8 @@ export type RSQuery<T> = {
 	execute?: boolean;
 
 	imageValue?: string;
+
+	sortField?: string;
+
+	sortBy?: string;
 };

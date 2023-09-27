@@ -2,7 +2,7 @@ import { ConfigType, RSQuery } from "../types/types";
 
 import Schema from '../validate/schema.js';
 import { RSQuerySchema } from "./schema";
-import { parseValue } from "./value";
+import { parseSortClause, parseValue } from "./value";
 
 
 const getSQLForQuery = (query: RSQuery<any>): string => {
@@ -45,6 +45,12 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 	const whereClause = parseValue(query)
 	if (whereClause.length > 0) {
 		sqlQuery.push("where", ...whereClause)
+	}
+
+	// Parse the `sortField` and `sortBy` fields.
+	const sortClause = parseSortClause(query)
+	if (sortClause.length > 0) {
+		sqlQuery.push("order", "by", ...sortClause)
 	}
 
 	// Include the size
@@ -115,7 +121,7 @@ export class ReactiveSearch {
 		const idToQueryMap: {[key: string]: string} = {}
 		data.forEach(rsQuery => {
 			if (rsQuery.execute !== undefined && !rsQuery.execute) return
-			
+
 			const queryForId = getSQLForQuery(rsQuery)
 			idToQueryMap[rsQuery.id!] = queryForId
 		})

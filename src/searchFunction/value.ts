@@ -25,14 +25,8 @@ export const parseValue = (query: RSQuery<any>): string[] => {
     // Make sure that value is proper type based on the search
     // type
     verifyValueByType(query.value, query.type!)
-
-    // If dataField is a string, make it a single entry array
-    let dfAsArr: string[] = []
-    if (typeof query.dataField == 'string') {
-        dfAsArr = [query.dataField]
-    } else {
-        dfAsArr = query.dataField
-    }
+    
+    const dfAsArr = parseDataFields(query.dataField)
 
     switch (query.type) {
         case 'search':
@@ -83,4 +77,38 @@ const verifyValueByType = (value: any, queryType: QueryType) => {
     if (typeof value == 'object') {
         throw new Error('value should be one of array or string when type is one of `search, suggestion, term`');
     }
+}
+
+
+const parseDataFields = (dfPassed: string | string[]): string[] => {
+    let dfAsArr: string[] = []
+
+    if (!dfPassed) return dfAsArr
+
+    if (typeof dfPassed == 'string') {
+        dfAsArr = [dfPassed]
+    } else {
+        dfAsArr = dfPassed
+    }
+
+    return dfAsArr
+}
+
+
+export const parseSortClause = (query: RSQuery<any>): string[] => {
+    // Parse the dataFields first, if we don't have a dataField,
+    // we cannot sort.    
+    if (!query.sortField) {
+        // Use the first entry from the dataField
+        const dfAsArr = parseDataFields(query.dataField!)
+        if (!dfAsArr.length) return []
+        
+        query.sortField = dfAsArr[0]
+    }
+
+    if (!query.sortBy) {
+        query.sortBy = "asc"
+    }
+
+    return [query.sortField, query.sortBy];
 }
