@@ -34,7 +34,6 @@ export const parseValue = (query: RSQuery<any>): string[] => {
         dfAsArr = query.dataField
     }
 
-    // TODO: Support range type
     switch (query.type) {
         case 'search':
         case 'suggestion':
@@ -54,12 +53,17 @@ export const parseValue = (query: RSQuery<any>): string[] => {
                 }
             })
             break
+        case "range":
+            const dfToUse = dfAsArr[0];
+            const start = query.value.start;
+            const end = query.value.end;
+            whereClauseBuilt.push(dfToUse, "between", start, "and", end)
+            break
         default:
             throw new Error('invalid type passed: ' + query.type)
     }
 
 
-    console.log(whereClauseBuilt)
     return whereClauseBuilt
 }
 
@@ -72,6 +76,8 @@ const verifyValueByType = (value: any, queryType: QueryType) => {
     if (queryType == 'range') {
         // We only support object here
         if (typeof value != 'object') throw new Error('value should be an object when type is `range`');
+
+        return
     }
 
     if (typeof value == 'object') {
