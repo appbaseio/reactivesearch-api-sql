@@ -114,6 +114,8 @@ export class ReactiveSearch {
 
 		const idToQueryMap: {[key: string]: string} = {}
 		data.forEach(rsQuery => {
+			if (rsQuery.execute !== undefined && !rsQuery.execute) return
+			
 			const queryForId = getSQLForQuery(rsQuery)
 			idToQueryMap[rsQuery.id!] = queryForId
 		})

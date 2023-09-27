@@ -60,4 +60,6 @@ export type RSQuery<T> = {
 	queryFormat?: QueryFormat;
 
 	from?: number;
+
+	execute?: boolean;
 };
