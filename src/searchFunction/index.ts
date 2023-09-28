@@ -46,13 +46,25 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 
 	sqlQuery.push("from", tableToUse.join(","))
 
+	let isWhereInjected = false
+
 	// Parse the value
 	const whereClause = parseValue(query)
 	if (whereClause.length > 0) {
 		sqlQuery.push("where", ...whereClause)
-	} else if (query.where && query.where != "") {
-		// Check if the where field was passed
-		sqlQuery.push("where", query.where)
+		isWhereInjected = true
+	}
+	
+	// If custom where clause is present, append it
+	if (query.where && query.where != "") {
+		if (isWhereInjected) {
+			// Figure out the queryFormat to use
+			if (!query.queryFormat) {
+				query.queryFormat = "or"
+			}
+			sqlQuery.push(query.queryFormat, query.where)
+		}
+		else sqlQuery.push("where", query.where)
 	}
 
 	// Parse the `sortField` and `sortBy` fields.
