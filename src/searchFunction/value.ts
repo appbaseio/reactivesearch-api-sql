@@ -112,3 +112,8 @@ export const parseSortClause = (query: RSQuery<any>): string[] => {
 
     return [query.sortField, query.sortBy];
 }
+
+
+export const buildVectorClause = (query: RSQuery<any>): string[] => {
+    return ["order", "by", query.vectorDataField!, '<->', `'[${query.queryVector}]'`]
+}

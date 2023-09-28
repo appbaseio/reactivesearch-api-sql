@@ -78,7 +78,9 @@ export type RSQuery<T> = {
 
 	where?: string;
 
-	vectorDataField?: string
+	vectorDataField?: string;
+
+	queryVector?: Array<number>;
 };
 
 

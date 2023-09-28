@@ -2,7 +2,7 @@ import { ConfigType, RSQuery, ResponseObject } from "../types/types";
 
 import Schema from '../validate/schema.js';
 import { RSQuerySchema } from "./schema";
-import { parseSortClause, parseValue } from "./value";
+import { buildVectorClause, parseSortClause, parseValue } from "./value";
 
 
 const getSQLForQuery = (query: RSQuery<any>): string => {
@@ -68,9 +68,20 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 	}
 
 	// Parse the `sortField` and `sortBy` fields.
-	const sortClause = parseSortClause(query)
-	if (sortClause.length > 0) {
-		sqlQuery.push("order", "by", ...sortClause)
+	//
+	// We can only support sorting if it is not a vector
+	// search as both operations use the `order by` logic.
+	//
+	// So we will make it an either or.
+	if (!query.vectorDataField || !query.queryVector) {
+		// Do the sorting since we are not doing vector search
+		const sortClause = parseSortClause(query)
+		if (sortClause.length > 0) {
+			sqlQuery.push("order", "by", ...sortClause)
+		}
+	} else {
+		// We are doing vector search here.
+		sqlQuery.push(...buildVectorClause(query))
 	}
 
 	// Include the size
