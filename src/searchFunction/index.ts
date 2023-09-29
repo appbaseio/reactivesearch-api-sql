@@ -1,4 +1,4 @@
-import { ConfigType, RSQuery, ResponseObject } from "../types/types";
+import { ConfigType, RSQuery, ResponseObject, executeFn } from "../types/types";
 
 import Schema from '../validate/schema.js';
 import { getEmbeddingForValue } from "./openai";
@@ -167,7 +167,7 @@ export class ReactiveSearch {
 		return idToQueryMap
 	};
 
-	query = async (data: RSQuery<any>[]): Promise<any> => {
+	query = async (data: RSQuery<any>[], executeCallback?: executeFn): Promise<any> => {
 		const error = this.verify(data);
 		if (error) {
 			return {
@@ -209,7 +209,14 @@ export class ReactiveSearch {
 					const query = idToQueryMap[item];
 
 					try {
-						const response = await executeQuery(this.config.client, query);
+						// If executorFn is called, use that
+						let response
+						if (executeCallback !== undefined) {
+							response = await executeCallback(this.config.client, query);
+						} else {
+							response = await executeQuery(this.config.client, query);
+						}
+					
 						const end = performance.now();
 						const took = Math.abs(end - start) || 1;
 

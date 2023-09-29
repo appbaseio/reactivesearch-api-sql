@@ -5,14 +5,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { ReactiveSearch } from "./lib/esm/index.js"
 import postgres from 'https://esm.sh/postgres'
+import * as denoPostgres from 'https://deno.land/x/postgres@v0.17.0/mod.ts'
 
 const databaseURL: string = Deno.env.get("DB_URL") || 'postgresql://localhost:5432'
 const openAIApiKey: string = Deno.env.get("OPENAI_API_KEY") || ''
 const client = postgres(databaseURL);
 
+// Create a database pool with three connections that are lazily established
+const pool = new denoPostgres.Pool(databaseURL, 3, true)
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey',
+}
+
+
+const executeFunction = async (client: any, sqlQuery: string) => {
+  // Grab a connection from the pool
+  console.log("Using custom executor");
+  const connection = await pool.connect()
+  const results = await connection.queryObject(sqlQuery);
+	return results.rows
+}
+
+function toJson(data) {
+  return JSON.stringify(data, (_, v) => typeof v === 'bigint' ? `${v}n` : v)
+      .replace(/"(-?\d+)n"/g, (_, a) => a);
 }
 
 
@@ -36,9 +54,9 @@ serve(async (req) => {
 			});
 
 			try {
-				const data = await ref.query(reqBody.query);
+				const data = await ref.query(reqBody.query, executeFunction);
         return new Response(
-          JSON.stringify(data),
+          toJson(data),
           { headers: { "Content-Type": "application/json" } }
         )
 			} catch (err) {

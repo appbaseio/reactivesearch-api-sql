@@ -14,6 +14,8 @@ export type DefaultQuery = {
 	query?: string;
 }
 
+export type executeFn = (client: any, sqlQuery: string) => any;
+
 
 export type RSQuery<T> = {
 	index?: string;
