@@ -84,6 +84,11 @@ export type RSQuery<T> = {
 };
 
 
+export type RSSettings = {
+	openai_dimensions?: number;
+}
+
+
 export type ResponseObject = {
 	response?: any;
 	error?: {
