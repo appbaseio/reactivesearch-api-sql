@@ -188,6 +188,8 @@ export class ReactiveSearch {
 			const embeddingsFetched = await getEmbeddingForValue(rsQuery, this.config.openAIApiKey)
 			if (embeddingsFetched && embeddingsFetched.length > 0) {
 				rsQuery.queryVector = embeddingsFetched;
+				console.log("Embeddings fetched for query: ", rsQuery.id);
+				console.log("Embedding length: ", embeddingsFetched.length);
 			}
 
 			const queryForId = getSQLForQuery(rsQuery)
