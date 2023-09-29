@@ -66,7 +66,7 @@ async function main() {
 		}
 	});
 
-	app.post(`/_reactivesearch/validate`, async (req, res) => {
+	app.post(`/_reactivesearch/validate`, (req, res) => {
 		try {
 			const { query } = validateRequest(req);
 			const ref = new ReactiveSearch({
@@ -75,7 +75,7 @@ async function main() {
 				openAIApiKey: openAIApiKey
 			});
 
-            const data = await ref.translate(query);
+            const data = ref.translate(query);
 			res.status(200).send(data);
 		} catch (error) {
 			res.status(400).send({

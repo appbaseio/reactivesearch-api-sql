@@ -3,12 +3,11 @@
 // This enables autocomplete, go to definition, etc.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { ReactiveSearch } from "../psql-reactivesearch/searchFunction";
+import { ReactiveSearch } from "./lib/esm/index.js"
 import postgres from 'https://esm.sh/postgres'
 
-require('dotenv').config();
-
-const databaseURL: string = process.env.DB_URL || 'postgresql://localhost:5432'
+const databaseURL: string = Deno.env.get("DB_URL") || 'postgresql://localhost:5432'
+const openAIApiKey: string = Deno.env.get("OPENAI_API_KEY") || ''
 const client = postgres(databaseURL);
 
 const corsHeaders = {
@@ -18,7 +17,7 @@ const corsHeaders = {
 
 
 serve(async (req) => {
-  const { url, method } = req
+  const {url, method } = req
   const reqBody = await req.json()
   
   console.log(url);
@@ -28,11 +27,12 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  if (url == "/_reactivesearch" && method == "POST") {
+  if (url.endsWith("/_reactivesearch") && method == "POST") {
     try {
 			const ref = new ReactiveSearch({
 				databaseName: "",
 				client: client,
+        openAIApiKey: openAIApiKey,
 			});
 
 			try {
@@ -66,10 +66,39 @@ serve(async (req) => {
       { headers: { "Content-Type": "application/json" } },
       );
 		}
+  } else if (url.endsWith("/_reactivesearch/validate") && method == "POST") {
+    try {
+			const ref = new ReactiveSearch({
+				databaseName: "",
+				client: client,
+				openAIApiKey: openAIApiKey
+			});
+
+      const data = ref.translate(reqBody.query);
+			return new Response(
+        JSON.stringify(data),
+        { headers: { "Content-Type": "application/json" } },
+      )
+		} catch (error) {
+			return new Response(
+        JSON.stringify({
+          error: {
+            message: error.message,
+            code: 400,
+            status: `Bad Request`,
+          },
+        }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+		}
   }
 
   return new Response(
-    JSON.stringify({"nana": true}),
+    JSON.stringify({error: {
+      message: "Something went wrong!",
+      code: 500,
+      status: "Internal Server Error"
+    }}),
     { headers: { "Content-Type": "application/json" } },
   )
 })
