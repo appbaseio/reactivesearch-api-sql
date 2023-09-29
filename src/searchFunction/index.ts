@@ -1,6 +1,7 @@
 import { ConfigType, RSQuery, ResponseObject } from "../types/types";
 
 import Schema from '../validate/schema.js';
+import { getEmbeddingForValue } from "./openai";
 import { RSQuerySchema } from "./schema";
 import { buildVectorClause, parseSortClause, parseValue } from "./value";
 
@@ -113,6 +114,7 @@ export class ReactiveSearch {
         this.config = {
 			client: config.client,
             databaseName: config.databaseName,
+			openAIApiKey: config.openAIApiKey
         }
 
         // @ts-ignore
@@ -155,7 +157,7 @@ export class ReactiveSearch {
 		}
 
 		const idToQueryMap: {[key: string]: string} = {}
-		data.forEach(rsQuery => {
+		data.forEach(async rsQuery => {
 			if (rsQuery.execute !== undefined && !rsQuery.execute) return
 
 			const queryForId = getSQLForQuery(rsQuery)
@@ -165,7 +167,7 @@ export class ReactiveSearch {
 		return idToQueryMap
 	};
 
-	query = (data: RSQuery<any>[]): any => {
+	query = async (data: RSQuery<any>[]): Promise<any> => {
 		const error = this.verify(data);
 		if (error) {
 			return {
@@ -178,17 +180,28 @@ export class ReactiveSearch {
 		}
 
 		const idToQueryMap: {[key: string]: string} = {}
-		data.forEach(rsQuery => {
-			if (rsQuery.execute !== undefined && !rsQuery.execute) return
+
+		for(const rsQuery of data) {
+			if (rsQuery.execute !== undefined && !rsQuery.execute) continue
+
+			// Check if automatic embedding fetch is required
+			const embeddingsFetched = await getEmbeddingForValue(rsQuery, this.config.openAIApiKey)
+			if (embeddingsFetched && embeddingsFetched.length > 0) {
+				rsQuery.queryVector = embeddingsFetched;
+			}
 
 			const queryForId = getSQLForQuery(rsQuery)
 			idToQueryMap[rsQuery.id!] = queryForId
-		})
+		}
+
+		// data.forEach(rsQuery => {
+			
+		// })
 
 		// Run each SQL query simultaneously and capture the results together
 		try {
 			const totalStart = performance.now();
-			return Promise.all(
+			const res = await Promise.all(
 				Object.keys(idToQueryMap).map(async (item: any) => {
 					const start = performance.now();
 					const query = idToQueryMap[item];
@@ -218,17 +231,17 @@ export class ReactiveSearch {
 						};
 					}
 				})
-			).then((res) => {
-				const totalEnd = performance.now();
-				const totalTimeTaken = Math.abs(totalEnd - totalStart) || 1;
+			)
 
-				const transformedRes = this.transformResponse(
-					totalTimeTaken,
-					<ResponseObject[]>res,
-				);
+			const totalEnd = performance.now();
+			const totalTimeTaken = Math.abs(totalEnd - totalStart) || 1;
 
-				return transformedRes;
-			});
+			const transformedRes = this.transformResponse(
+				totalTimeTaken,
+				<ResponseObject[]>res,
+			);
+
+			return transformedRes;
 		} catch(err) {
 			throw err
 		}

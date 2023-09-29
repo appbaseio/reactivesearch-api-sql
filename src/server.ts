@@ -9,6 +9,7 @@ async function main() {
 	const app = express();
 	const PORT = process.env.PORT || 8080;
 	const databaseURL: string = process.env.DB_URL || 'postgresql://localhost:5432'
+	const openAIApiKey: string = process.env.OPENAI_API_KEY || ''
 	const client = postgres(databaseURL);
 	console.log(`✅ [db]: Connected successfully`);
 
@@ -39,6 +40,7 @@ async function main() {
 			const ref = new ReactiveSearch({
 				databaseName: "",
 				client: client,
+				openAIApiKey: openAIApiKey,
 			});
 
 			try {
@@ -64,15 +66,16 @@ async function main() {
 		}
 	});
 
-	app.post(`/_reactivesearch/validate`, (req, res) => {
+	app.post(`/_reactivesearch/validate`, async (req, res) => {
 		try {
 			const { query } = validateRequest(req);
 			const ref = new ReactiveSearch({
 				databaseName: "",
 				client: client,
+				openAIApiKey: openAIApiKey
 			});
 
-            const data = ref.translate(query);
+            const data = await ref.translate(query);
 			res.status(200).send(data);
 		} catch (error) {
 			res.status(400).send({

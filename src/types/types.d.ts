@@ -1,6 +1,7 @@
 export type ConfigType = {
     client?: any;
     databaseName: string;
+	openAIApiKey: string;
 }
 
 
@@ -82,11 +83,6 @@ export type RSQuery<T> = {
 
 	queryVector?: Array<number>;
 };
-
-
-export type RSSettings = {
-	openai_dimensions?: number;
-}
 
 
 export type ResponseObject = {
