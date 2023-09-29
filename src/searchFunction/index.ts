@@ -58,11 +58,7 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 	// If custom where clause is present, append it
 	if (query.where && query.where != "") {
 		if (isWhereInjected) {
-			// Figure out the queryFormat to use
-			if (!query.queryFormat) {
-				query.queryFormat = "or"
-			}
-			sqlQuery.push(query.queryFormat, query.where)
+			sqlQuery.push("and", query.where)
 		}
 		else sqlQuery.push("where", query.where)
 	}
