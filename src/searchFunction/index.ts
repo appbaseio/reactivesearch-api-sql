@@ -6,7 +6,10 @@ import { RSQuerySchema } from "./schema";
 import { buildVectorClause, parseSortClause, parseValue } from "./value";
 
 
-const getSQLForQuery = (query: RSQuery<any>): string => {
+const TOTAL_COUNT_FIELD: string = 'total_count__rs';
+
+
+const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): string => {
 	/**
 	 * Get the SQL equivalent of the query and accordingly return the
 	 * SQL string.
@@ -37,6 +40,11 @@ const getSQLForQuery = (query: RSQuery<any>): string => {
 
 	// Build the select * part of the sql string
 	sqlQuery.push("select", query.includeFields.join(","))
+
+	// Append the column for total_count
+	//
+	// NOTE: Don't inject it if it is being generated for validate
+	if (!isValidate) sqlQuery.push(",", `count(*) over() as ${TOTAL_COUNT_FIELD}`)
 
 	let tableToUse: string[] = []
 	if (typeof query.table == "string") {
@@ -160,7 +168,7 @@ export class ReactiveSearch {
 		data.forEach(async rsQuery => {
 			if (rsQuery.execute !== undefined && !rsQuery.execute) return
 
-			const queryForId = getSQLForQuery(rsQuery)
+			const queryForId = getSQLForQuery(rsQuery, true)
 			idToQueryMap[rsQuery.id!] = queryForId
 		})
 
@@ -264,13 +272,24 @@ export class ReactiveSearch {
 				return transformedRes[id] = error;
 			}
 
+			// Calculate the total count by reading it from
+			// the first element if it is non 0.
+			let totalHits = 0;
+			if (response.length > 0) {
+				totalHits = parseInt(response[0][TOTAL_COUNT_FIELD]);
+
+			}
+
 			const responseBody = {
 				took: Math.round(took * 100) / 100,
 				hits: {
 					total: {
-						value: response.length
+						value: totalHits
 					},
 					hits: response.map((r: Object) => {
+						// Remove the total count from the hits
+						delete r[TOTAL_COUNT_FIELD as keyof typeof r]
+
 						return {
 							_score: 1,
 							_source: r
