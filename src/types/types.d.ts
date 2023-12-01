@@ -14,6 +14,10 @@ export type DefaultQuery = {
 	query?: string;
 }
 
+export type DataFieldWithWeight = {
+	field?: string;
+}
+
 export type executeFn = (client: any, sqlQuery: string) => any;
 
 
@@ -63,7 +67,7 @@ export type RSQuery<T> = {
 
 	value?: T;
 
-	dataField?: string | Array<string>;
+	dataField?: string | Array<string | DataFieldWithWeight>;
 
 	queryFormat?: QueryFormat;
 

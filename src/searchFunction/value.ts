@@ -1,4 +1,4 @@
-import { QueryType, RSQuery } from "src/types/types";
+import { DataFieldWithWeight, QueryType, RSQuery } from "src/types/types";
 
 export const parseValue = (query: RSQuery<any>): string[] => {
     /**
@@ -97,7 +97,7 @@ const verifyValueByType = (value: any, queryType: QueryType) => {
 }
 
 
-const parseDataFields = (dfPassed: string | string[]): string[] => {
+const parseDataFields = (dfPassed: string | Array<string | DataFieldWithWeight>): string[] => {
     let dfAsArr: string[] = []
 
     if (!dfPassed) return dfAsArr
@@ -105,7 +105,11 @@ const parseDataFields = (dfPassed: string | string[]): string[] => {
     if (typeof dfPassed == 'string') {
         dfAsArr = [dfPassed]
     } else {
-        dfAsArr = dfPassed
+        // Parse the items and make sure that the objects are converted
+        // to string ignoring the weight
+        dfPassed.forEach(df => {
+            dfAsArr.push(typeof df == 'string' ? df : df.field!)
+        })
     }
 
     return dfAsArr
