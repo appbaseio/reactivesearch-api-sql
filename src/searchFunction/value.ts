@@ -76,6 +76,8 @@ export const buildTermQuery = (query: RSQuery<any>): string[] => {
     if (!query.queryFormat) {
         query.queryFormat = 'or'
     }
+
+    return [];
 }
 
 
@@ -97,7 +99,7 @@ const verifyValueByType = (value: any, queryType: QueryType) => {
 }
 
 
-const parseDataFields = (dfPassed: string | Array<string | DataFieldWithWeight>): string[] => {
+export const parseDataFields = (dfPassed: string | Array<string | DataFieldWithWeight>): string[] => {
     let dfAsArr: string[] = []
 
     if (!dfPassed) return dfAsArr
