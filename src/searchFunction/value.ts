@@ -67,11 +67,18 @@ export const buildTermQuery = (query: RSQuery<any>): string[] => {
 
     // If no dataField is passed then throw an error
     if (!query.dataField) {
-        throw new Error('`dataField` is required when `value` is passed!')
+        throw new Error('`dataField` is required!')
     }
 
-    // TODO: Parse the dataField into a single field regardless of which format
-    // it is passed in.
+    const dfAsArr = parseDataFields(query.dataField);
+
+    // Throw an error if the dataField is not passed.
+    if (dfAsArr.length === 0) {
+        throw new Error('`dataField` should not be empty.')
+    }
+
+    const dfToUse = dfAsArr[0];
+
 
     if (!query.queryFormat) {
         query.queryFormat = 'or'
