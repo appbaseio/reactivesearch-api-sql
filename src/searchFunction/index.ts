@@ -39,7 +39,11 @@ const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): strin
 	// also passed.
 
 	// Build the select * part of the sql string
-	sqlQuery.push("select", query.includeFields.join(","))
+	if (query.type != 'term') sqlQuery.push("select", query.includeFields.join(","));
+	else {
+		// Build the select query with the dataField and the count by using a custom
+		// key for it.
+	}
 
 	// Append the column for total_count
 	//

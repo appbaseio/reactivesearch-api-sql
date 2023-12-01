@@ -39,13 +39,13 @@ export const parseValue = (query: RSQuery<any>): string[] => {
             })
             break
         case 'term':
-            dfAsArr.forEach((df, index) => {
-                whereClauseBuilt.push(...[df, "=", `'${query.value}'`])
-                console.log(index, dfAsArr.length - 1)
-                if (index != dfAsArr.length - 1) {
-                    whereClauseBuilt.push(query.queryFormat!)
-                }
-            })
+            // dfAsArr.forEach((df, index) => {
+            //     whereClauseBuilt.push(...[df, "=", `'${query.value}'`])
+            //     console.log(index, dfAsArr.length - 1)
+            //     if (index != dfAsArr.length - 1) {
+            //         whereClauseBuilt.push(query.queryFormat!)
+            //     }
+            // })
             break
         case "range":
             const dfToUse = dfAsArr[0];
@@ -59,6 +59,23 @@ export const parseValue = (query: RSQuery<any>): string[] => {
 
 
     return whereClauseBuilt
+}
+
+export const buildTermQuery = (query: RSQuery<any>): string[] => {
+    // It is fine if value is not passed at all as we don't
+    // care for it unless another query is reacting to it.
+
+    // If no dataField is passed then throw an error
+    if (!query.dataField) {
+        throw new Error('`dataField` is required when `value` is passed!')
+    }
+
+    // TODO: Parse the dataField into a single field regardless of which format
+    // it is passed in.
+
+    if (!query.queryFormat) {
+        query.queryFormat = 'or'
+    }
 }
 
 
