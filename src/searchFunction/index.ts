@@ -1,15 +1,15 @@
-import { ConfigType, RSQuery, ResponseObject, executeFn } from "../types/types";
+import { ConfigType, RSQuery, ResponseObject, SQLQueryObject, executeFn } from "../types/types";
 
 import Schema from '../validate/schema.js';
 import { getEmbeddingForValue } from "./openai";
 import { RSQuerySchema } from "./schema";
-import { buildTermQuery, buildVectorClause, parseSortClause, parseValue } from "./value";
+import { buildTermQuery, buildVectorClause, parseSortClause, parseValue, transformTermQueryResponse } from "./value";
 
 
 const TOTAL_COUNT_FIELD: string = 'total_count__rs';
 
 
-const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): string => {
+const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): SQLQueryObject => {
 	/**
 	 * Get the SQL equivalent of the query and accordingly return the
 	 * SQL string.
@@ -18,7 +18,9 @@ const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): strin
 
 	// If `defaultQuery` is present, we don't need to build a query
 	if (query.defaultQuery && query.defaultQuery.query) {
-		return query.defaultQuery.query
+		return {
+			statement: query.defaultQuery.query
+		}
 	}
 
 	// Make sure that table is always passed
@@ -46,7 +48,7 @@ const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): strin
 	// if it is not then continue execution.
 	if (query.type === "term") {
 		// Handle it.
-		return buildTermQuery(query, tableToUse).join(" ") + ";";
+		return buildTermQuery(query, tableToUse);
 	}
 
 	// If `value` is specified then make sure dataField is
@@ -108,7 +110,9 @@ const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): strin
 		sqlQuery.push("offset", String(query.from))
 	}
 
-	return sqlQuery.join(" ") + ";"
+	return {
+		statement: sqlQuery.join(" ") + ";"
+	}
 }
 
 const executeQuery = async (client: any, sqlQuery: string) => {
@@ -171,7 +175,7 @@ export class ReactiveSearch {
 			};
 		}
 
-		const idToQueryMap: {[key: string]: string} = {}
+		const idToQueryMap: {[key: string]: SQLQueryObject} = {}
 		data.forEach(async rsQuery => {
 			if (rsQuery.execute !== undefined && !rsQuery.execute) return
 
@@ -194,7 +198,8 @@ export class ReactiveSearch {
 			};
 		}
 
-		const idToQueryMap: {[key: string]: string} = {}
+		const idToQueryMap: {[key: string]: SQLQueryObject} = {}
+		const idToOriginalQueryMap: {[key: string]: RSQuery<any>} = {}
 
 		for(const rsQuery of data) {
 			if (rsQuery.execute !== undefined && !rsQuery.execute) continue
@@ -209,11 +214,8 @@ export class ReactiveSearch {
 
 			const queryForId = getSQLForQuery(rsQuery)
 			idToQueryMap[rsQuery.id!] = queryForId
+			idToOriginalQueryMap[rsQuery.id!] = rsQuery
 		}
-
-		// data.forEach(rsQuery => {
-			
-		// })
 
 		// Run each SQL query simultaneously and capture the results together
 		try {
@@ -221,7 +223,7 @@ export class ReactiveSearch {
 			const res = await Promise.all(
 				Object.keys(idToQueryMap).map(async (item: any) => {
 					const start = performance.now();
-					const query = idToQueryMap[item];
+					const query = idToQueryMap[item].statement;
 
 					try {
 						// If executorFn is called, use that
@@ -237,7 +239,9 @@ export class ReactiveSearch {
 
 						return {
 							id: item,
-							response, took
+							response, took,
+							query: idToOriginalQueryMap[item],
+							customData: idToQueryMap[item].customData
 						}
 					} catch (err) {
 						const end = performance.now();
@@ -252,6 +256,8 @@ export class ReactiveSearch {
 								status: 500,
 							},
 							took,
+							query: idToOriginalQueryMap[item],
+							customData: idToQueryMap[item].customData
 						};
 					}
 				})
@@ -274,9 +280,29 @@ export class ReactiveSearch {
 	transformResponse = (totalTimeTaken: number, data: ResponseObject[]): any => {
 		const transformedRes: any = {};
 		data.forEach((item: any) => {
-			const { id, response, error, took } = item;
+			const { id, response, error, took, query, customData } = item;
+			const tookCalculated = Math.round(took * 100) / 100;
 			if (error) {
 				return transformedRes[id] = error;
+			}
+
+			if (query.type == 'term') {
+				const dfUsed = customData['dataField']
+				const aggrBucket = transformTermQueryResponse(response, dfUsed);
+				return transformedRes[id] = {
+					took: tookCalculated,
+					hits: {
+						total: {
+							value: 0
+						},
+						hits: []
+					},
+					aggregations: {
+						[dfUsed]: {
+							buckets: aggrBucket
+						}
+					},
+				}
 			}
 
 			// Calculate the total count by reading it from
@@ -284,11 +310,10 @@ export class ReactiveSearch {
 			let totalHits = 0;
 			if (response.length > 0) {
 				totalHits = parseInt(response[0][TOTAL_COUNT_FIELD]);
-
 			}
 
 			const responseBody = {
-				took: Math.round(took * 100) / 100,
+				took: tookCalculated,
 				hits: {
 					total: {
 						value: totalHits

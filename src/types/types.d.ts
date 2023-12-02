@@ -100,4 +100,16 @@ export type ResponseObject = {
 	};
 	id: string;
 	took: number;
+	query: RSQuery<any>;
+	customData?: Object;
 };
+
+export type SQLQueryObject = {
+	statement: string;
+	customData?: Object;
+}
+
+export type AggregationResponse = {
+	key: any;
+	doc_count: number;
+}

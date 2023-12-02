@@ -1,4 +1,4 @@
-import { DataFieldWithWeight, QueryType, RSQuery } from "src/types/types";
+import { AggregationResponse, DataFieldWithWeight, QueryType, RSQuery, SQLQueryObject } from "src/types/types";
 import { getTermQueryCountName } from "./util";
 
 export const parseValue = (query: RSQuery<any>): string[] => {
@@ -62,7 +62,7 @@ export const parseValue = (query: RSQuery<any>): string[] => {
     return whereClauseBuilt
 }
 
-export const buildTermQuery = (query: RSQuery<any>, tableToUse: string[]): string[] => {
+export const buildTermQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQueryObject => {
     // It is fine if value is not passed at all as we don't
     // care for it unless another query is reacting to it.
 
@@ -95,7 +95,27 @@ export const buildTermQuery = (query: RSQuery<any>, tableToUse: string[]): strin
     queryBuilt.push("group", "by", dfToUse);
     queryBuilt.push("order", "by", getTermQueryCountName(dfToUse), "desc");
 
-    return queryBuilt;
+    return {
+        statement: queryBuilt.join(" ") + ";",
+        customData: {
+            "dataField": dfToUse,
+        }
+    };
+}
+
+export const transformTermQueryResponse = (response: Array<Object>, dfUsed: string): any => {
+    const aggregationsBucket: AggregationResponse[] = []
+
+    const countKey = getTermQueryCountName(dfUsed)
+
+    response.forEach(item => {
+        aggregationsBucket.push({
+            key: item[dfUsed as keyof typeof item],
+            doc_count: Number(String(item[countKey as keyof typeof item]))
+        })
+    })
+    
+    return aggregationsBucket;
 }
 
 
