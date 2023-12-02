@@ -3,7 +3,7 @@ import { ConfigType, RSQuery, ResponseObject, executeFn } from "../types/types";
 import Schema from '../validate/schema.js';
 import { getEmbeddingForValue } from "./openai";
 import { RSQuerySchema } from "./schema";
-import { buildVectorClause, parseSortClause, parseValue } from "./value";
+import { buildTermQuery, buildVectorClause, parseSortClause, parseValue } from "./value";
 
 
 const TOTAL_COUNT_FIELD: string = 'total_count__rs';
@@ -35,27 +35,30 @@ const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): strin
 		query.type = 'search'
 	}
 
-	// If `value` is specified then make sure dataField is
-	// also passed.
-
-	// Build the select * part of the sql string
-	if (query.type != 'term') sqlQuery.push("select", query.includeFields.join(","));
-	else {
-		// Build the select query with the dataField and the count by using a custom
-		// key for it.
-	}
-
-	// Append the column for total_count
-	//
-	// NOTE: Don't inject it if it is being generated for validate
-	if (!isValidate) sqlQuery.push(",", `count(*) over() as ${TOTAL_COUNT_FIELD}`)
-
 	let tableToUse: string[] = []
 	if (typeof query.table == "string") {
 		tableToUse.push(query.table)
 	} else {
 		tableToUse = query.table
 	}
+
+	// If it's a term query, handle it separately altogether and
+	// if it is not then continue execution.
+	if (query.type === "term") {
+		// Handle it.
+		return buildTermQuery(query, tableToUse).join(" ") + ";";
+	}
+
+	// If `value` is specified then make sure dataField is
+	// also passed.
+
+	// Build the select * part of the sql string
+	sqlQuery.push("select", query.includeFields.join(","));
+
+	// Append the column for total_count
+	//
+	// NOTE: Don't inject it if it is being generated for validate
+	if (!isValidate) sqlQuery.push(",", `count(*) over() as ${TOTAL_COUNT_FIELD}`)
 
 	sqlQuery.push("from", tableToUse.join(","))
 

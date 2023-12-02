@@ -1,4 +1,5 @@
 import { DataFieldWithWeight, QueryType, RSQuery } from "src/types/types";
+import { getTermQueryCountName } from "./util";
 
 export const parseValue = (query: RSQuery<any>): string[] => {
     /**
@@ -61,7 +62,7 @@ export const parseValue = (query: RSQuery<any>): string[] => {
     return whereClauseBuilt
 }
 
-export const buildTermQuery = (query: RSQuery<any>): string[] => {
+export const buildTermQuery = (query: RSQuery<any>, tableToUse: string[]): string[] => {
     // It is fine if value is not passed at all as we don't
     // care for it unless another query is reacting to it.
 
@@ -79,12 +80,22 @@ export const buildTermQuery = (query: RSQuery<any>): string[] => {
 
     const dfToUse = dfAsArr[0];
 
+    const countClause = `COUNT(*) as ${getTermQueryCountName(dfToUse)}`
 
     if (!query.queryFormat) {
         query.queryFormat = 'or'
     }
 
-    return [];
+    const selectClauseVars = [dfToUse, countClause];
+
+    const queryBuilt = ["select", selectClauseVars.join(", ")];
+
+    queryBuilt.push("from", tableToUse.join(","));
+
+    queryBuilt.push("group", "by", dfToUse);
+    queryBuilt.push("order", "by", getTermQueryCountName(dfToUse), "desc");
+
+    return queryBuilt;
 }
 
 
