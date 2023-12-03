@@ -9,7 +9,7 @@ export const RS_MAX_FIELD_NAME = buildFieldName("overall_max_year");
 export const RS_BUCKET_KEY_NAME = buildFieldName("key");
 export const RS_DOC_COUNT_KEY_NAME = buildFieldName("doc_count");
 
-export const buildRangeMinMaxQuery = (field: string, table: string, whereClause: string | null = null, isMin: boolean = false, isMax: boolean = false): string => {
+export const buildRangeMinMaxQuery = (field: string, table: string, whereClause: string | null = null, isMin: boolean = false, isMax: boolean = false): MinMaxQueryDetails => {
     /**
      * @param field - DataField from where the min and max will be fetched
      * @param table - Table from where the data will be fetched
@@ -26,7 +26,13 @@ export const buildRangeMinMaxQuery = (field: string, table: string, whereClause:
     if (isMin) selectQueryAsArr.push(`MIN(${field}) AS ${RS_MIN_FIELD_NAME}`);
     if (isMax) selectQueryAsArr.push(`MAX(${field}) AS ${RS_MAX_FIELD_NAME}`);
     
-    return `SELECT ${selectQueryAsArr.join(", ")} FROM "${table}"${whereClause != null ? " WHERE " + whereClause : ''}`
+    const query = `SELECT ${selectQueryAsArr.join(", ")} FROM "${table}"${whereClause != null ? " WHERE " + whereClause : ''}`;
+
+    return {
+        minField: isMin ? RS_MIN_FIELD_NAME : null,
+        maxField: isMax ? RS_MAX_FIELD_NAME : null,
+        query: query
+    }
 }
 
 const buildFloorQuery = (field: string, interval: Number, shouldMultiply: boolean = true): string => {
