@@ -110,7 +110,7 @@ export const buildRangeWhereClause = (field: string, value: any): string | null 
     }
 
     if (end) {
-        return `${field} < {end}`
+        return `${field} < ${end}`
     }
 
     return null
@@ -158,6 +158,8 @@ export const buildRangeQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQ
     if (isMax || isMin) {
         minMaxDetails = buildRangeMinMaxQuery(dfToUse, tableToUse.join(","), )
     }
+
+    console.log(minMaxDetails);
 
     return {
         statement: "",
