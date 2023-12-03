@@ -1,4 +1,5 @@
-import { MinMaxQueryDetails } from "src/types/types";
+import { MinMaxQueryDetails, RSQuery, SQLQueryObject } from "src/types/types";
+import { parseDataFields, verifyValueByType } from "./value";
 
 const buildFieldName = (fieldName: string): string => {
     return `rs__${fieldName}`
@@ -80,4 +81,86 @@ export const buildHistogramQuery = (field: string, table: string, interval: Numb
     }
 
     return `${withClause != "" ? withClause + " " : ""}SELECT ${selectQueryAsArr.join(", ")} FROM ${fromClause.join(", ")}${whereClause != null ? " WHERE " + whereClause + " " : ''}GROUP BY ${groupByClause.join(", ")} ORDER BY ${RS_BUCKET_KEY_NAME}`
+}
+
+export const buildRangeWhereClause = (field: string, value: any): string | null => {
+    /**
+     * Build the where clause depending on the passed value.
+     * 
+     * If the value is not of proper type for range, we will throw an error.
+     */
+
+    // No need to generate a where clause if the value is not
+    // passed at all so we can just return null.
+    if (!value) return null;
+
+    // Make sure that the passed value is of proper type
+    verifyValueByType(value, "range");
+
+    const start = value.start;
+    const end = value.end;
+
+    // If both `start` and `end` are present, use a between query.
+    if (start && end) {
+        return `${field} between ${start} and ${end}`
+    }
+
+    if (start) {
+        return `${field} > ${start}`
+    }
+
+    if (end) {
+        return `${field} < {end}`
+    }
+
+    return null
+}
+
+
+export const buildRangeQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQueryObject => {
+    /**
+     * Build the range query based on the passed query and by parsing the
+     * fields of the query.
+     */
+    if (!query.aggregations || query.aggregations.length === 0) {
+        // There's nothing to parse.
+        return {
+            statement: "",
+            customData: {
+                "emptyResponse": true
+            }
+        }
+    }
+
+    // If no dataField is passed then throw an error
+    if (!query.dataField) {
+        throw new Error('`dataField` is required!')
+    }
+
+    const dfAsArr = parseDataFields(query.dataField);
+
+    // Throw an error if the dataField is not passed.
+    if (dfAsArr.length === 0) {
+        throw new Error('`dataField` should not be empty.')
+    }
+
+    const dfToUse = dfAsArr[0];
+
+    // TODO: Create the where clause depending on whether or not the value is
+    // passed.
+
+    const isMin = query.aggregations.includes("min");
+    const isMax = query.aggregations.includes("max");
+
+    // Build the query if one of max or min is passed
+    let minMaxDetails;
+
+    if (isMax || isMin) {
+        minMaxDetails = buildRangeMinMaxQuery(dfToUse, tableToUse.join(","), )
+    }
+
+    return {
+        statement: "",
+        customData: {}
+    }
 }

@@ -90,6 +90,8 @@ export type RSQuery<T> = {
 	queryVector?: Array<number>;
 
 	aggregationSize?: number;
+
+	aggregations?: Array<string>;
 };
 
 

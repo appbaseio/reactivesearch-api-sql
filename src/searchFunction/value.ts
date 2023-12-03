@@ -122,7 +122,7 @@ export const transformTermQueryResponse = (response: Array<Object>, dfUsed: stri
 }
 
 
-const verifyValueByType = (value: any, queryType: QueryType) => {
+export const verifyValueByType = (value: any, queryType: QueryType) => {
     /**
      * Verify the passed value by type and return an error
      * if there is any
@@ -130,7 +130,6 @@ const verifyValueByType = (value: any, queryType: QueryType) => {
     if (queryType == 'range') {
         // We only support object here
         if (typeof value != 'object') throw new Error('value should be an object when type is `range`');
-
         return
     }
 
