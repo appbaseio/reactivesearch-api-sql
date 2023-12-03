@@ -88,6 +88,8 @@ export type RSQuery<T> = {
 	vectorDataField?: string;
 
 	queryVector?: Array<number>;
+
+	aggregationSize?: number;
 };
 
 

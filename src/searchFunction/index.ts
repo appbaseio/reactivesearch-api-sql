@@ -288,7 +288,7 @@ export class ReactiveSearch {
 
 			if (query.type == 'term') {
 				const dfUsed = customData['dataField']
-				const aggrBucket = transformTermQueryResponse(response, dfUsed);
+				const aggrBucket = transformTermQueryResponse(response, dfUsed, query);
 				return transformedRes[id] = {
 					took: tookCalculated,
 					hits: {

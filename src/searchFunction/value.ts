@@ -103,7 +103,7 @@ export const buildTermQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQu
     };
 }
 
-export const transformTermQueryResponse = (response: Array<Object>, dfUsed: string): any => {
+export const transformTermQueryResponse = (response: Array<Object>, dfUsed: string, query: RSQuery<any>): any => {
     const aggregationsBucket: AggregationResponse[] = []
 
     const countKey = getTermQueryCountName(dfUsed)
@@ -114,8 +114,11 @@ export const transformTermQueryResponse = (response: Array<Object>, dfUsed: stri
             doc_count: Number(String(item[countKey as keyof typeof item]))
         })
     })
+
+    // If aggregationSize is not present, use `size` else fallback to 10.
+    const sliceAggrAt = query.aggregationSize || query.size || 10;
     
-    return aggregationsBucket;
+    return aggregationsBucket.slice(0, sliceAggrAt);
 }
 
 
