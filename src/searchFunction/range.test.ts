@@ -1,4 +1,4 @@
-import { buildHistogramQuery, buildRangeMinMaxQuery, buildRangeWhereClause } from "./range"
+import { buildHistogramQuery, buildRangeMinMaxQuery, buildRangeQuery, buildRangeWhereClause } from "./range"
 
 describe("buildRangeMinMaxQuery", () => {
     it("should build query without where clause added", () => {
@@ -67,4 +67,4 @@ describe("buildRangeWhereClause", () => {
     it("should throw error if value is not null but is not an object", () => {
         expect(() => {buildRangeWhereClause("test", "test value")}).toThrow(Error);
     })
-})
+});

@@ -2,6 +2,7 @@ import { ConfigType, RSQuery, ResponseObject, SQLQueryObject, executeFn } from "
 
 import Schema from '../validate/schema.js';
 import { getEmbeddingForValue } from "./openai";
+import { buildRangeQuery } from "./range";
 import { RSQuerySchema } from "./schema";
 import { buildTermQuery, buildVectorClause, parseSortClause, parseValue, transformTermQueryResponse } from "./value";
 
@@ -49,6 +50,9 @@ const getSQLForQuery = (query: RSQuery<any>, isValidate: boolean = false): SQLQu
 	if (query.type === "term") {
 		// Handle it.
 		return buildTermQuery(query, tableToUse);
+	} else if (query.type === "range") {
+		// Return a range query built directly.
+		return buildRangeQuery(query, tableToUse);
 	}
 
 	// If `value` is specified then make sure dataField is
