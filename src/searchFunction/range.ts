@@ -19,7 +19,7 @@ export const buildRangeMinMaxQuery = (field: string, table: string, whereClause:
      */
 
     // At-least one of `isMin` and `isMax` should be `true` else we cannot continue.
-    if (!isMax && !isMax) throw new Error('one of min/max is required!')
+    if (!isMax && !isMin) throw new Error('one of min/max is required!')
     
     const selectQueryAsArr: string[] = [];
 
