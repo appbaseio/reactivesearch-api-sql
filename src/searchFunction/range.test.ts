@@ -18,7 +18,8 @@ describe("buildRangeMinMaxQuery", () => {
 describe("buildHistogramQuery", () => {
     it("should build histogram without min max query", () => {
         const queryBuilt = buildHistogramQuery("original_publication_year", "good-books", 1, "original_publication_year between 1980 and 2018");
+        const expectedQuery = `SELECT FLOOR(original_publication_year / 1) * 1 AS rs__key, COUNT(*) AS rs__doc_count FROM \"good-books\" WHERE original_publication_year between 1980 and 2018 GROUP BY FLOOR(original_publication_year / 1) ORDER BY rs__key`
 
-        expect(queryBuilt).toBeNull()
+        expect(queryBuilt).toEqual(expectedQuery)
     })
 })

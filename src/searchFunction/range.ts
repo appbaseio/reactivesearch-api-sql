@@ -73,7 +73,5 @@ export const buildHistogramQuery = (field: string, table: string, interval: Numb
         withClause = `WITH OverallStats AS (${minMaxDetails.query})`
     }
 
-    return `
-    ${withClause} SELECT ${selectQueryAsArr.join(", ")} FROM ${fromClause.join(", ")}${whereClause != null ? " WHERE " + whereClause + " " : ''}GROUP BY ${groupByClause.join(", ")} ORDER BY ${RS_BUCKET_KEY_NAME}
-    `
+    return `${withClause != "" ? withClause + " " : ""}SELECT ${selectQueryAsArr.join(", ")} FROM ${fromClause.join(", ")}${whereClause != null ? " WHERE " + whereClause + " " : ''}GROUP BY ${groupByClause.join(", ")} ORDER BY ${RS_BUCKET_KEY_NAME}`
 }
