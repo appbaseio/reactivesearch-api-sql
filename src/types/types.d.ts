@@ -92,6 +92,8 @@ export type RSQuery<T> = {
 	aggregationSize?: number;
 
 	aggregations?: Array<string>;
+
+	interval?: Number;
 };
 
 

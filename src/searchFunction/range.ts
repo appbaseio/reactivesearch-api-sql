@@ -146,23 +146,54 @@ export const buildRangeQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQ
 
     const dfToUse = dfAsArr[0];
 
-    // TODO: Create the where clause depending on whether or not the value is
+    // If interval is not passed, use it as 1
+    if (!query.interval) {
+        query.interval = 1
+    }
+
+    // Create the where clause depending on whether or not the value is
     // passed.
+    const whereClause = buildRangeWhereClause(dfToUse, query.value);
 
     const isMin = query.aggregations.includes("min");
     const isMax = query.aggregations.includes("max");
+    const isHistogram = query.aggregations.includes("histogram");
+
+    // If neither of the three is passed, we will return a custom response
+    if (!isMin && !isMax && !isHistogram) {
+        return {
+            statement: "",
+            customData: {
+                "emptyResponse": true
+            }
+        }
+    }
+
+    const customDataToReturn = {
+        RS_BUCKET_KEY_NAME,
+        RS_DOC_COUNT_KEY_NAME,
+        RS_MIN_FIELD_NAME,
+        RS_MAX_FIELD_NAME
+    }
 
     // Build the query if one of max or min is passed
     let minMaxDetails;
 
     if (isMax || isMin) {
-        minMaxDetails = buildRangeMinMaxQuery(dfToUse, tableToUse.join(","), )
+        minMaxDetails = buildRangeMinMaxQuery(dfToUse, tableToUse.join(","), whereClause, isMin, isMax);
+
+        // If there is no histogram requirement, we can return this statement directly.
+        if (!isHistogram) return {
+            statement: minMaxDetails.query! + ";",
+            customData: customDataToReturn
+        }
     }
 
-    console.log(minMaxDetails);
+    // Seems like histogram is expected by the user.
+    const queryBuilt = buildHistogramQuery(dfToUse, tableToUse.join(","), query.interval, whereClause, minMaxDetails);
 
     return {
-        statement: "",
-        customData: {}
+        statement: queryBuilt + ";",
+        customData: customDataToReturn
     }
 }
