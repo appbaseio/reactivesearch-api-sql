@@ -115,3 +115,10 @@ export type AggregationResponse = {
 	key: any;
 	doc_count: number;
 }
+
+
+export type MinMaxQueryDetails = {
+	minField?: string | null;
+	maxField?: string | null;
+	query?: string | null;
+}
