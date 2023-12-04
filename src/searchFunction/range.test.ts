@@ -1,4 +1,4 @@
-import { buildHistogramQuery, buildRangeMinMaxQuery, buildRangeQuery, buildRangeWhereClause } from "./range"
+import { buildHistogramQuery, buildRangeMinMaxQuery, buildRangeWhereClause } from "./range"
 
 describe("buildRangeMinMaxQuery", () => {
     it("should build query without where clause added", () => {
@@ -51,11 +51,11 @@ describe("buildRangeWhereClause", () => {
     });
     it("should build properly when only start is passed", () => {
         const whereClauseBuilt = buildRangeWhereClause("test", {start: 1980});
-        expect(whereClauseBuilt).toEqual("test > 1980");
+        expect(whereClauseBuilt).toEqual("test >= 1980");
     });
     it("should build properly when only end is passed", () => {
         const whereClauseBuilt = buildRangeWhereClause("test", {end: 1980});
-        expect(whereClauseBuilt).toEqual("test < 1980");
+        expect(whereClauseBuilt).toEqual("test <= 1980");
     });
     it("should return null when value is null or neither start or end is passed", () => {
         const withNullValue = buildRangeWhereClause("test", null);
