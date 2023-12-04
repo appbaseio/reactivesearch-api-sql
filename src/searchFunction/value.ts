@@ -90,7 +90,7 @@ export const buildTermQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQu
 
     const queryBuilt = ["select", selectClauseVars.join(", ")];
 
-    queryBuilt.push("from", tableToUse.join(","));
+    queryBuilt.push("from", tableToUse.map(table => `"${table}"`).join(","));
 
     queryBuilt.push("group", "by", dfToUse);
     queryBuilt.push("order", "by", getTermQueryCountName(dfToUse), "desc");
