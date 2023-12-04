@@ -173,7 +173,8 @@ export const buildRangeQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQ
         RS_BUCKET_KEY_NAME,
         RS_DOC_COUNT_KEY_NAME,
         RS_MIN_FIELD_NAME,
-        RS_MAX_FIELD_NAME
+        RS_MAX_FIELD_NAME,
+        field: dfToUse,
     }
 
     // Build the query if one of max or min is passed
@@ -223,6 +224,21 @@ export const transformRangeQueryResponse = (response: Array<Object>, query: RSQu
         responseObject["max"] = {
             "value": Number(firstItem[maxKey as keyof typeof firstItem])
         }
+    }
+
+    if (query.aggregations?.includes("histogram")) {
+        // Parse the histogram aggregations
+        const histogramAggrBucket: Array<Object> = [];
+        const keyName = customData.RS_BUCKET_KEY_NAME;
+        const docCountName = customData.RS_DOC_COUNT_KEY_NAME;
+        response.forEach(responseEach => {
+            histogramAggrBucket.push({
+                key: responseEach[keyName as keyof typeof responseEach],
+                doc_count: Number(responseEach[docCountName as keyof typeof responseEach])
+            })
+        });
+
+        responseObject[customData.field] = histogramAggrBucket;
     }
 
     return responseObject
