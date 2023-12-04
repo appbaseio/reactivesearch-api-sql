@@ -202,8 +202,11 @@ export const buildRangeQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQ
 export const transformRangeQueryResponse = (response: Array<Object>, query: RSQuery<any>, customData: {[key: string]: any}): any => {
     const responseObject: {[key: string]: any} = {}
 
-    // TODO: If customData has empty response key present, return
+    // If customData has empty response key present, return
     // an empty response
+    if (customData.emptyResponse) {
+        return null
+    }
 
     // Use the first item to parse the min and max fields
     if (!response.length) return responseObject
