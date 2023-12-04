@@ -80,7 +80,7 @@ export const buildHistogramQuery = (field: string, table: string, interval: Numb
         withClause = `WITH OverallStats AS (${minMaxDetails.query})`
     }
 
-    return `${withClause != "" ? withClause + " " : ""}SELECT ${selectQueryAsArr.join(", ")} FROM ${fromClause.join(", ")}${whereClause != null ? " WHERE " + whereClause + " " : ''}GROUP BY ${groupByClause.join(", ")} ORDER BY ${RS_BUCKET_KEY_NAME}`
+    return `${withClause != "" ? withClause + " " : ""}SELECT ${selectQueryAsArr.join(", ")} FROM ${fromClause.join(", ")}${whereClause != null ? " WHERE " + whereClause + " " : ' '}GROUP BY ${groupByClause.join(", ")} ORDER BY ${RS_BUCKET_KEY_NAME}`
 }
 
 export const buildRangeWhereClause = (field: string, value: any): string | null => {
@@ -106,11 +106,11 @@ export const buildRangeWhereClause = (field: string, value: any): string | null 
     }
 
     if (start) {
-        return `${field} > ${start}`
+        return `${field} >= ${start}`
     }
 
     if (end) {
-        return `${field} < ${end}`
+        return `${field} <= ${end}`
     }
 
     return null
@@ -196,4 +196,34 @@ export const buildRangeQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQ
         statement: queryBuilt + ";",
         customData: customDataToReturn
     }
+}
+
+export const transformRangeQueryResponse = (response: Array<Object>, query: RSQuery<any>, customData: {[key: string]: any}): any => {
+    const responseObject: {[key: string]: any} = {}
+
+    // TODO: If customData has empty response key present, return
+    // an empty response
+
+    // Use the first item to parse the min and max fields
+    if (!response.length) return responseObject
+
+    const firstItem = response[0];
+
+    if (query.aggregations?.includes("min")) {
+        // Parse the min field.
+        const minKey = customData.RS_MIN_FIELD_NAME;
+        responseObject["min"] = {
+            "value": Number(firstItem[minKey as keyof typeof firstItem])
+        }
+    }
+
+    if (query.aggregations?.includes("max")) {
+        // Parse the max field.
+        const maxKey = customData.RS_MAX_FIELD_NAME;
+        responseObject["max"] = {
+            "value": Number(firstItem[maxKey as keyof typeof firstItem])
+        }
+    }
+
+    return responseObject
 }

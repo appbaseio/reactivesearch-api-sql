@@ -2,7 +2,7 @@ import { ConfigType, RSQuery, ResponseObject, SQLQueryObject, executeFn } from "
 
 import Schema from '../validate/schema.js';
 import { getEmbeddingForValue } from "./openai";
-import { buildRangeQuery } from "./range";
+import { buildRangeQuery, transformRangeQueryResponse } from "./range";
 import { RSQuerySchema } from "./schema";
 import { buildTermQuery, buildVectorClause, parseSortClause, parseValue, transformTermQueryResponse } from "./value";
 
@@ -306,6 +306,20 @@ export class ReactiveSearch {
 							buckets: aggrBucket
 						}
 					},
+				}
+			}
+
+			if (query.type == 'range') {
+				const aggrBucket = transformRangeQueryResponse(response, query, customData);
+				return transformedRes[id] = {
+					took: tookCalculated,
+					hits: {
+						total: {
+							value: 0
+						},
+						hits: []
+					},
+					aggregations: aggrBucket
 				}
 			}
 
