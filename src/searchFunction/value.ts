@@ -109,8 +109,9 @@ export const transformTermQueryResponse = (response: Array<Object>, dfUsed: stri
     const countKey = getTermQueryCountName(dfUsed)
 
     response.forEach(item => {
+        const keyParsed = item[dfUsed as keyof typeof item];
         aggregationsBucket.push({
-            key: item[dfUsed as keyof typeof item],
+            key: keyParsed || "",
             doc_count: Number(String(item[countKey as keyof typeof item]))
         })
     })
