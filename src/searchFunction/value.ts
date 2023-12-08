@@ -1,4 +1,5 @@
-import { QueryType, RSQuery } from "src/types/types";
+import { AggregationResponse, DataFieldWithWeight, QueryType, RSQuery, SQLQueryObject } from "src/types/types";
+import { getTermQueryCountName } from "./util";
 
 export const parseValue = (query: RSQuery<any>): string[] => {
     /**
@@ -39,13 +40,13 @@ export const parseValue = (query: RSQuery<any>): string[] => {
             })
             break
         case 'term':
-            dfAsArr.forEach((df, index) => {
-                whereClauseBuilt.push(...[df, "=", `'${query.value}'`])
-                console.log(index, dfAsArr.length - 1)
-                if (index != dfAsArr.length - 1) {
-                    whereClauseBuilt.push(query.queryFormat!)
-                }
-            })
+            // dfAsArr.forEach((df, index) => {
+            //     whereClauseBuilt.push(...[df, "=", `'${query.value}'`])
+            //     console.log(index, dfAsArr.length - 1)
+            //     if (index != dfAsArr.length - 1) {
+            //         whereClauseBuilt.push(query.queryFormat!)
+            //     }
+            // })
             break
         case "range":
             const dfToUse = dfAsArr[0];
@@ -61,8 +62,68 @@ export const parseValue = (query: RSQuery<any>): string[] => {
     return whereClauseBuilt
 }
 
+export const buildTermQuery = (query: RSQuery<any>, tableToUse: string[]): SQLQueryObject => {
+    // It is fine if value is not passed at all as we don't
+    // care for it unless another query is reacting to it.
 
-const verifyValueByType = (value: any, queryType: QueryType) => {
+    // If no dataField is passed then throw an error
+    if (!query.dataField) {
+        throw new Error('`dataField` is required!')
+    }
+
+    const dfAsArr = parseDataFields(query.dataField);
+
+    // Throw an error if the dataField is not passed.
+    if (dfAsArr.length === 0) {
+        throw new Error('`dataField` should not be empty.')
+    }
+
+    const dfToUse = dfAsArr[0];
+
+    const countClause = `COUNT(*) as ${getTermQueryCountName(dfToUse)}`
+
+    if (!query.queryFormat) {
+        query.queryFormat = 'or'
+    }
+
+    const selectClauseVars = [dfToUse, countClause];
+
+    const queryBuilt = ["select", selectClauseVars.join(", ")];
+
+    queryBuilt.push("from", tableToUse.map(table => `"${table}"`).join(","));
+
+    queryBuilt.push("group", "by", dfToUse);
+    queryBuilt.push("order", "by", getTermQueryCountName(dfToUse), "desc");
+
+    return {
+        statement: queryBuilt.join(" ") + ";",
+        customData: {
+            "dataField": dfToUse,
+        }
+    };
+}
+
+export const transformTermQueryResponse = (response: Array<Object>, dfUsed: string, query: RSQuery<any>): any => {
+    const aggregationsBucket: AggregationResponse[] = []
+
+    const countKey = getTermQueryCountName(dfUsed)
+
+    response.forEach(item => {
+        const keyParsed = item[dfUsed as keyof typeof item];
+        aggregationsBucket.push({
+            key: keyParsed || "",
+            doc_count: Number(String(item[countKey as keyof typeof item]))
+        })
+    })
+
+    // If aggregationSize is not present, use `size` else fallback to 10.
+    const sliceAggrAt = query.aggregationSize || query.size || 10;
+    
+    return aggregationsBucket.slice(0, sliceAggrAt);
+}
+
+
+export const verifyValueByType = (value: any, queryType: QueryType) => {
     /**
      * Verify the passed value by type and return an error
      * if there is any
@@ -70,7 +131,6 @@ const verifyValueByType = (value: any, queryType: QueryType) => {
     if (queryType == 'range') {
         // We only support object here
         if (typeof value != 'object') throw new Error('value should be an object when type is `range`');
-
         return
     }
 
@@ -80,7 +140,7 @@ const verifyValueByType = (value: any, queryType: QueryType) => {
 }
 
 
-const parseDataFields = (dfPassed: string | string[]): string[] => {
+export const parseDataFields = (dfPassed: string | Array<string | DataFieldWithWeight>): string[] => {
     let dfAsArr: string[] = []
 
     if (!dfPassed) return dfAsArr
@@ -88,7 +148,11 @@ const parseDataFields = (dfPassed: string | string[]): string[] => {
     if (typeof dfPassed == 'string') {
         dfAsArr = [dfPassed]
     } else {
-        dfAsArr = dfPassed
+        // Parse the items and make sure that the objects are converted
+        // to string ignoring the weight
+        dfPassed.forEach(df => {
+            dfAsArr.push(typeof df == 'string' ? df : df.field!)
+        })
     }
 
     return dfAsArr

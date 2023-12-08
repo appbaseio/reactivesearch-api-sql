@@ -14,6 +14,10 @@ export type DefaultQuery = {
 	query?: string;
 }
 
+export type DataFieldWithWeight = {
+	field?: string;
+}
+
 export type executeFn = (client: any, sqlQuery: string) => any;
 
 
@@ -63,7 +67,7 @@ export type RSQuery<T> = {
 
 	value?: T;
 
-	dataField?: string | Array<string>;
+	dataField?: string | Array<string | DataFieldWithWeight>;
 
 	queryFormat?: QueryFormat;
 
@@ -84,6 +88,12 @@ export type RSQuery<T> = {
 	vectorDataField?: string;
 
 	queryVector?: Array<number>;
+
+	aggregationSize?: number;
+
+	aggregations?: Array<string>;
+
+	interval?: Number;
 };
 
 
@@ -96,4 +106,23 @@ export type ResponseObject = {
 	};
 	id: string;
 	took: number;
+	query: RSQuery<any>;
+	customData?: Object;
 };
+
+export type SQLQueryObject = {
+	statement: string;
+	customData?: Object;
+}
+
+export type AggregationResponse = {
+	key: any;
+	doc_count: number;
+}
+
+
+export type MinMaxQueryDetails = {
+	minField?: string | null;
+	maxField?: string | null;
+	query?: string | null;
+}
